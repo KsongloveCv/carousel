@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: mengzhao-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mengzhao
+      POSTGRES_PASSWORD: mengzhao123
+      POSTGRES_DB: pet_grooming
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mengzhao -d pet_grooming"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./server
+    container_name: mengzhao-api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://mengzhao:mengzhao123@db:5432/pet_grooming
+      PORT: 3000
+      APP_DOMAIN: mengzhao.pet
+      SEED_ON_START: "true"
+      SEED_SECRET: mengzhao-seed
+    working_dir: /app
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "3000"
+
+  web:
+    image: nginx:alpine
+    container_name: mengzhao-web
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - .:/usr/share/nginx/html:ro
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
