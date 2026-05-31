@@ -37,6 +37,19 @@ export async function initSchema() {
     "utf8"
   );
   await pool.query(sql);
+  await pool.query(
+    "ALTER TABLE services ADD COLUMN IF NOT EXISTS image_url VARCHAR(255)"
+  );
+}
+
+export async function syncServiceImages() {
+  for (const s of services) {
+    if (!s.image_url) continue;
+    await pool.query(
+      `UPDATE services SET image_url = $1 WHERE slug = $2`,
+      [s.image_url, s.slug]
+    );
+  }
 }
 
 export async function seedDatabase({ force = false } = {}) {
@@ -53,15 +66,24 @@ export async function seedDatabase({ force = false } = {}) {
 
   for (const s of services) {
     await pool.query(
-      `INSERT INTO services (slug, name, icon, description, price_from, sort_order)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO services (slug, name, icon, image_url, description, price_from, sort_order)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        ON CONFLICT (slug) DO UPDATE SET
          name = EXCLUDED.name,
          icon = EXCLUDED.icon,
+         image_url = EXCLUDED.image_url,
          description = EXCLUDED.description,
          price_from = EXCLUDED.price_from,
          sort_order = EXCLUDED.sort_order`,
-      [s.slug, s.name, s.icon, s.description, s.price_from, s.sort_order]
+      [
+        s.slug,
+        s.name,
+        s.icon,
+        s.image_url || null,
+        s.description,
+        s.price_from,
+        s.sort_order,
+      ]
     );
   }
 

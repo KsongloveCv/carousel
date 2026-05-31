@@ -8,6 +8,7 @@ import {
   waitForDb,
   initSchema,
   seedDatabase,
+  syncServiceImages,
 } from "./db.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -125,6 +126,7 @@ async function start() {
     const result = await seedDatabase();
     console.log("Seed on start:", result);
   }
+  await syncServiceImages();
 
   app.listen(PORT, () => {
     console.log(`API running on http://localhost:${PORT}`);

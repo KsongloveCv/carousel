@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS services (
   slug VARCHAR(50) UNIQUE NOT NULL,
   name VARCHAR(100) NOT NULL,
   icon VARCHAR(16),
+  image_url VARCHAR(255),
   description TEXT,
   price_from NUMERIC(10, 2) NOT NULL DEFAULT 0,
   sort_order INT NOT NULL DEFAULT 0,

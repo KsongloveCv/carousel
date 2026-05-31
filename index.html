@@ -445,15 +445,55 @@
     .service-card {
       background: var(--cream);
       border-radius: var(--radius);
-      padding: 2rem;
+      padding: 0;
+      overflow: hidden;
       transition: transform 0.3s, box-shadow 0.3s;
       border: 1px solid transparent;
+      display: flex;
+      flex-direction: column;
     }
 
     .service-card:hover {
       transform: translateY(-6px);
       box-shadow: var(--shadow);
       border-color: rgba(255, 183, 140, 0.5);
+    }
+
+    .service-card-image-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      background: #eee;
+    }
+
+    .service-card-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.4s ease;
+    }
+
+    .service-card:hover .service-card-image {
+      transform: scale(1.05);
+    }
+
+    .service-card-badge {
+      position: absolute;
+      top: 0.75rem;
+      left: 0.75rem;
+      background: rgba(255, 255, 255, 0.92);
+      padding: 0.35rem 0.65rem;
+      border-radius: 999px;
+      font-size: 1.1rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .service-card-body {
+      padding: 1.25rem 1.5rem 1.5rem;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
     }
 
     .service-icon {
@@ -938,31 +978,8 @@
       <h2>我们的服务项目</h2>
       <p>从基础清洁到造型美容，为猫咪、狗狗提供全方位呵护</p>
     </div>
-    <div class="services-grid">
-      <article class="service-card">
-        <div class="service-icon">🛁</div>
-        <h3>精致洗浴</h3>
-        <p>温水预洗、深层清洁、护毛素护理、吹干梳理，选用进口低敏香波。</p>
-        <span class="service-price">¥68 起</span>
-      </article>
-      <article class="service-card">
-        <div class="service-icon">✂️</div>
-        <h3>造型美容</h3>
-        <p>专业修剪、修甲、清耳、挤肛腺，根据品种定制可爱造型。</p>
-        <span class="service-price">¥128 起</span>
-      </article>
-      <article class="service-card">
-        <div class="service-icon">💆</div>
-        <h3>SPA 护理</h3>
-        <p>精油按摩、毛发滋养、皮肤舒缓，缓解换毛期不适与干燥。</p>
-        <span class="service-price">¥168 起</span>
-      </article>
-      <article class="service-card">
-        <div class="service-icon">🦷</div>
-        <h3>口腔护理</h3>
-        <p>牙齿检查、口气清新、牙龈护理，预防牙结石与口臭问题。</p>
-        <span class="service-price">¥58 起</span>
-      </article>
+    <div class="services-grid" id="servicesGrid">
+      <p class="services-loading" style="text-align:center;color:var(--text-muted);grid-column:1/-1;">正在加载服务项目…</p>
     </div>
   </section>
 
@@ -1180,6 +1197,34 @@
       return "★".repeat(n) + "☆".repeat(5 - n);
     }
 
+    async function loadServices() {
+      const grid = document.getElementById("servicesGrid");
+      try {
+        const res = await fetch(`${API}/services`);
+        if (!res.ok) throw new Error("services fetch failed");
+        const list = await res.json();
+        grid.innerHTML = list
+          .map(
+            (s) => `
+          <article class="service-card">
+            <div class="service-card-image-wrap">
+              <img class="service-card-image" src="${s.image_url || ""}" alt="${s.name}" loading="lazy" />
+              <span class="service-card-badge">${s.icon || "🐾"}</span>
+            </div>
+            <div class="service-card-body">
+              <h3>${s.name}</h3>
+              <p>${s.description}</p>
+              <span class="service-price">¥${Number(s.price_from)} 起</span>
+            </div>
+          </article>`
+          )
+          .join("");
+      } catch {
+        grid.innerHTML =
+          '<p style="text-align:center;color:var(--text-muted);grid-column:1/-1;">服务加载失败，请确认后端已启动</p>';
+      }
+    }
+
     async function loadReviews() {
       const grid = document.getElementById("reviewsGrid");
       try {
@@ -1267,6 +1312,7 @@
       setTimeout(() => toast.classList.remove("show"), 3500);
     });
 
+    loadServices();
     loadReviews();
     loadStats();
     checkApiHealth();
